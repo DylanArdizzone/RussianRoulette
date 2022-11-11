@@ -1,0 +1,48 @@
+creator: address
+players: public(DynArray[address, 100])
+losers: public(DynArray[address,10000])
+odds: public(uint256)
+playersTurn: public(uint256)
+
+@external
+def __init__():
+    self.creator = msg.sender
+    self.playersTurn =0
+
+@external
+def setOdds(oneInThisMany: uint256):
+    assert msg.sender == self.creator
+    self.odds = oneInThisMany
+
+@external
+def addPlayer(player: address):
+    for i in self.players:
+        assert i != player
+    for h in self.losers:
+        assert h != player
+    self.players.append(player)
+
+@internal
+def lose(player: address):
+    self.players = []
+    self.losers.append(player)
+
+@internal
+def random() -> uint256:
+    return pow_mod256(chain.id * block.number * block.difficulty, self.odds) +1
+
+@external
+def play():
+    h: uint256 = self.random()
+    if h==1:
+        self.lose(self.players[self.playersTurn])
+        self.playersTurn =0
+    else:
+        self.playersTurn += self.playersTurn
+
+@external
+def isALoser(person: address)-> bool:
+    for i in self.losers:
+        if i == person:
+            return True
+    return False
